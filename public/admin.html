@@ -36,113 +36,119 @@
       font-style: normal;
     }
     :root {
-      --bg: #0f1419;
-      --surface: #1a2332;
-      --surface-hover: #243044;
-      --border: #2d3a4d;
-      --text: #e6edf3;
-      --text-muted: #8b9eb7;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #22c55e;
-      --danger: #ef4444;
-      --radius: 10px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+      --bg: #f5f9f5;
+      --surface: #ffffff;
+      --surface-elevated: #eef5ee;
+      --border: #c8e0c8;
+      --text: #1a2e1a;
+      --text-muted: #4a6b4a;
+      --accent: #228b22;
+      --accent-hover: #1a6b1a;
+      --success: #2d8a4a;
+      --danger: #c44242;
+      --radius: 8px;
+      --radius-lg: 12px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Source Serif 4', Georgia, serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      line-height: 1.5;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     .header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 1.25rem 2rem;
+      padding: 1rem 1.5rem;
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
     }
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.6rem;
     }
 
     .logo-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--accent), #60a5fa);
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(145deg, var(--accent), #3ba53b);
       border-radius: var(--radius);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
     }
 
     .logo-text {
-      font-weight: 700;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: -0.01em;
     }
 
     .header-meta {
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 2rem 1.5rem;
     }
 
     .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      display: flex;
       gap: 1rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
     }
 
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.25rem;
-      transition: border-color 0.2s;
-    }
-
-    .stat-card:hover {
-      border-color: var(--accent);
+      padding: 1rem 1.25rem;
+      min-width: 140px;
     }
 
     .stat-label {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.35rem;
     }
 
     .stat-value {
-      font-size: 1.75rem;
-      font-weight: 700;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
     }
 
     .section-title {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 1rem;
       color: var(--text);
     }
 
@@ -155,19 +161,19 @@
     .submission-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      transition: background 0.2s, border-color 0.2s;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      transition: border-color 0.15s ease;
     }
 
     .submission-card:hover {
-      background: var(--surface-hover);
-      border-color: var(--accent);
+      border-color: var(--border);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
     }
 
     .submission-header {
       display: flex;
-      align-items: flex-start;
+      align-items: baseline;
       justify-content: space-between;
       gap: 1rem;
       margin-bottom: 1rem;
@@ -176,42 +182,43 @@
 
     .submission-purpose {
       font-weight: 600;
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: var(--accent);
     }
 
-    .submission-id {
-      font-size: 0.8rem;
+    .submission-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      font-family: monospace;
     }
 
-    .submission-date {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+    .submission-meta span {
+      font-family: ui-monospace, monospace;
     }
 
     .submission-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem 1.5rem;
     }
 
     .field {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.2rem;
     }
 
     .field-label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-muted);
     }
 
     .field-value {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       word-break: break-word;
     }
 
@@ -224,6 +231,8 @@
       text-decoration: underline;
     }
 
+    .field-full { grid-column: 1 / -1; }
+
     .files-list {
       margin-top: 1rem;
       padding-top: 1rem;
@@ -234,61 +243,65 @@
       margin-bottom: 0.5rem;
     }
 
+    .file-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
     .file-link {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 0.75rem;
-      background: var(--bg);
+      gap: 0.4rem;
+      padding: 0.35rem 0.65rem;
+      background: var(--surface-elevated);
       border-radius: 6px;
       color: var(--accent);
       text-decoration: none;
-      font-size: 0.9rem;
-      margin: 0.25rem 0.25rem 0 0;
-      transition: background 0.2s;
+      font-size: 0.85rem;
+      transition: background 0.15s;
     }
 
     .file-link:hover {
-      background: var(--surface-hover);
+      background: var(--border);
     }
 
-    .empty-state {
+    .empty-state, .loading {
       text-align: center;
       padding: 4rem 2rem;
       color: var(--text-muted);
+      font-size: 0.95rem;
     }
 
     .empty-state-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 6px;
       opacity: 0.5;
     }
 
-    .loading {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: var(--text-muted);
-    }
-
     .error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid var(--danger);
+      background: rgba(196, 66, 66, 0.1);
+      border: 1px solid rgba(196, 66, 66, 0.35);
       color: var(--danger);
-      padding: 1rem;
+      padding: 0.875rem 1rem;
       border-radius: var(--radius);
       margin-bottom: 1rem;
+      font-size: 0.9rem;
     }
 
     .refresh-btn {
       background: var(--accent);
-      color: white;
+      color: #ffffff;
       border: none;
-      padding: 0.5rem 1rem;
+      padding: 0.45rem 0.9rem;
       border-radius: 6px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 500;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.15s;
     }
 
     .refresh-btn:hover {
@@ -298,11 +311,13 @@
 </head>
 <body>
   <header class="header">
-    <div class="logo">
-      <div class="logo-icon">👴</div>
-      <span class="logo-text">TechHelpSeniors</span>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">TH</div>
+        <span class="logo-text">TechHelpSeniors</span>
+      </div>
+      <span class="header-meta">Admin</span>
     </div>
-    <div class="header-meta">Admin Dashboard</div>
   </header>
 
   <main class="container">
@@ -316,15 +331,15 @@
     </div>
 
     <section>
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 class="section-title">Form submissions</h2>
+      <div class="section-header">
+        <h2 class="section-title">Submissions</h2>
         <button class="refresh-btn" id="refresh">Refresh</button>
       </div>
 
       <div id="content">
         <div class="loading" id="loading">Loading submissions…</div>
         <div class="empty-state" id="empty" style="display: none;">
-          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-icon" aria-hidden="true"></div>
           <p>No submissions yet.</p>
         </div>
         <div class="submissions-list" id="submissions" style="display: none;"></div>
@@ -356,7 +371,7 @@
         const fileLinks = paths.map(p => {
           const url = apiBase + '/api/files/' + encodeURIComponent(p) + '?key=' + encodeURIComponent(key);
           const name = p.split('/').pop() || p;
-          return `<a class="file-link" href="${url}" target="_blank" rel="noopener">📎 ${escapeHtml(name)}</a>`;
+          return `<a class="file-link" href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>`;
         }).join('');
 
         const date = s.timestamp ? new Date(s.timestamp).toLocaleString() : '—';
@@ -364,9 +379,9 @@
           <article class="submission-card">
             <div class="submission-header">
               <span class="submission-purpose">${escapeHtml(s.formPurpose || '—')}</span>
-              <div>
-                <span class="submission-id">${escapeHtml(s.id || '')}</span>
-                <span class="submission-date">${escapeHtml(date)}</span>
+              <div class="submission-meta">
+                <span>${escapeHtml(s.id || '')}</span>
+                <span>${escapeHtml(date)}</span>
               </div>
             </div>
             <div class="submission-grid">
@@ -386,7 +401,7 @@
                 <span class="field-label">Phone</span>
                 <span class="field-value">${s.phone ? `<a href="tel:${escapeHtml(s.phone)}">${escapeHtml(s.phone)}</a>` : '—'}</span>
               </div>
-              <div class="field" style="grid-column: 1 / -1;">
+              <div class="field field-full">
                 <span class="field-label">Help needed / offered</span>
                 <span class="field-value">${escapeHtml(s.helpNeededOffered || '—')}</span>
               </div>
@@ -394,7 +409,7 @@
             ${paths.length ? `
             <div class="files-list">
               <span class="field-label">Additional materials</span>
-              <div>${fileLinks}</div>
+              <div class="file-links">${fileLinks}</div>
             </div>
             ` : ''}
           </article>
