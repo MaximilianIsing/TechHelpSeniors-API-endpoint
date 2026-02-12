@@ -16,9 +16,10 @@ const ADMIN_KEY = (process.env.ADMIN_KEY || (() => {
   try { return fs.readFileSync(path.join(__dirname, 'admin_pass.txt'), 'utf8'); } catch { return ''; }
 })()).replace(/\s/g, '');
 
-// Directories
-const DATA_DIR = path.join(__dirname, 'data');
-const UPLOADS_BASE = path.join(__dirname, 'uploads');
+// Directories — use DATA_PATH (e.g. /data on Render disk) when set
+const STORAGE_ROOT = process.env.DATA_PATH || __dirname;
+const DATA_DIR = path.join(STORAGE_ROOT, 'data');
+const UPLOADS_BASE = path.join(STORAGE_ROOT, 'uploads');
 const CSV_PATH = path.join(DATA_DIR, 'submissions.csv');
 
 [DATA_DIR, UPLOADS_BASE].forEach(dir => {
@@ -95,7 +96,7 @@ app.post('/api/submit', upload.array('additionalMaterials', 10), (req, res) => {
   const helpNeededOffered = req.body.helpNeededOffered || '';
 
   const files = req.files || [];
-  const relPaths = files.map(f => path.relative(__dirname, f.path).replace(/\\/g, '/'));
+  const relPaths = files.map(f => path.relative(STORAGE_ROOT, f.path).replace(/\\/g, '/'));
 
   const row = [id, timestamp, formPurpose, firstName, lastName, email, phone, helpNeededOffered, relPaths.join('|')];
   const csvLine = stringify([row], { header: false });
@@ -153,7 +154,7 @@ app.get(/^\/api\/files\/(.+)$/, (req, res) => {
   let relPath = (req.path.match(/^\/api\/files\/(.+)$/)?.[1] || '');
   try { relPath = decodeURIComponent(relPath); } catch { relPath = ''; }
   relPath = relPath.replace(/\.\./g, '');
-  const fullPath = path.resolve(path.join(__dirname, relPath));
+  const fullPath = path.resolve(path.join(STORAGE_ROOT, relPath));
   const uploadsDir = path.resolve(UPLOADS_BASE);
   if (!fullPath.startsWith(uploadsDir + path.sep) && fullPath !== uploadsDir) {
     return res.status(403).send('Forbidden');

@@ -5,7 +5,13 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
+    disk:
+      name: forms
+      mountPath: /storage
+      sizeGB: 1
     envVars:
+      - key: DATA_PATH
+        value: /storage
       - key: API_KEY
         sync: false
       - key: ADMIN_KEY

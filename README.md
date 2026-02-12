@@ -19,11 +19,11 @@ npm start
 2. Connect your repo
 3. **Build command:** `npm install`
 4. **Start command:** `npm start`
-5. Add environment variables:
+5. Add environment variables (all caps):
    - `API_KEY` — for form submissions (or uses `api_key.txt`)
    - `ADMIN_KEY` — for admin access (or uses `admin_pass.txt`)
 
-**Note:** On Render, use environment variables for secrets. The `data/` and `uploads/` folders are ephemeral unless you add a persistent disk.
+**Note:** Form data and uploads are stored on a Render persistent disk (`/storage`), so they survive deploys. A disk requires a paid Render plan. Locally, data is stored in `data/` and `uploads/` under the project root.
 
 ## API
 
