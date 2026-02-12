@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechHelpSeniors — Admin Dashboard</title>
+  <style>
+    @font-face {
+      font-family: 'Source Serif 4';
+      src: url('/static/SourceSerif4-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      src: url('/static/SourceSerif4-Italic.ttf') format('truetype');
+      font-weight: 400;
+      font-style: italic;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      src: url('/static/SourceSerif4-Medium.ttf') format('truetype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      src: url('/static/SourceSerif4-SemiBold.ttf') format('truetype');
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      src: url('/static/SourceSerif4-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface-hover: #243044;
+      --border: #2d3a4d;
+      --text: #e6edf3;
+      --text-muted: #8b9eb7;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), #60a5fa);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .header-meta {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .submissions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .submission-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .submission-card:hover {
+      background: var(--surface-hover);
+      border-color: var(--accent);
+    }
+
+    .submission-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .submission-purpose {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .submission-id {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .submission-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .submission-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .field-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .field-value {
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+
+    .field-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .field-value a:hover {
+      text-decoration: underline;
+    }
+
+    .files-list {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .files-list .field-label {
+      margin-bottom: 0.5rem;
+    }
+
+    .file-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--bg);
+      border-radius: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin: 0.25rem 0.25rem 0 0;
+      transition: background 0.2s;
+    }
+
+    .file-link:hover {
+      background: var(--surface-hover);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+    }
+
+    .refresh-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">👴</div>
+      <span class="logo-text">TechHelpSeniors</span>
+    </div>
+    <div class="header-meta">Admin Dashboard</div>
+  </header>
+
+  <main class="container">
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="stats" class="stats" style="display: none;">
+      <div class="stat-card">
+        <div class="stat-label">Total submissions</div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+    </div>
+
+    <section>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h2 class="section-title">Form submissions</h2>
+        <button class="refresh-btn" id="refresh">Refresh</button>
+      </div>
+
+      <div id="content">
+        <div class="loading" id="loading">Loading submissions…</div>
+        <div class="empty-state" id="empty" style="display: none;">
+          <div class="empty-state-icon">📋</div>
+          <p>No submissions yet.</p>
+        </div>
+        <div class="submissions-list" id="submissions" style="display: none;"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const params = new URLSearchParams(location.search);
+      const key = params.get('key');
+      if (!key) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').textContent = 'Missing key. Access the admin page with ?key=YOUR_ADMIN_KEY';
+        document.getElementById('error').style.display = 'block';
+        return;
+      }
+
+      const apiBase = location.origin;
+      const submissionsEl = document.getElementById('submissions');
+      const loadingEl = document.getElementById('loading');
+      const emptyEl = document.getElementById('empty');
+      const errorEl = document.getElementById('error');
+      const statsEl = document.getElementById('stats');
+      const statTotalEl = document.getElementById('stat-total');
+
+      function renderSubmission(s) {
+        const paths = Array.isArray(s.additionalMaterialsPaths) ? s.additionalMaterialsPaths : (s.additionalMaterialsPaths || '').split('|').filter(Boolean);
+        const fileLinks = paths.map(p => {
+          const url = apiBase + '/api/files/' + encodeURIComponent(p) + '?key=' + encodeURIComponent(key);
+          const name = p.split('/').pop() || p;
+          return `<a class="file-link" href="${url}" target="_blank" rel="noopener">📎 ${escapeHtml(name)}</a>`;
+        }).join('');
+
+        const date = s.timestamp ? new Date(s.timestamp).toLocaleString() : '—';
+        return `
+          <article class="submission-card">
+            <div class="submission-header">
+              <span class="submission-purpose">${escapeHtml(s.formPurpose || '—')}</span>
+              <div>
+                <span class="submission-id">${escapeHtml(s.id || '')}</span>
+                <span class="submission-date">${escapeHtml(date)}</span>
+              </div>
+            </div>
+            <div class="submission-grid">
+              <div class="field">
+                <span class="field-label">First name</span>
+                <span class="field-value">${escapeHtml(s.firstName || '—')}</span>
+              </div>
+              <div class="field">
+                <span class="field-label">Last name</span>
+                <span class="field-value">${escapeHtml(s.lastName || '—')}</span>
+              </div>
+              <div class="field">
+                <span class="field-label">Email</span>
+                <span class="field-value">${s.email ? `<a href="mailto:${escapeHtml(s.email)}">${escapeHtml(s.email)}</a>` : '—'}</span>
+              </div>
+              <div class="field">
+                <span class="field-label">Phone</span>
+                <span class="field-value">${s.phone ? `<a href="tel:${escapeHtml(s.phone)}">${escapeHtml(s.phone)}</a>` : '—'}</span>
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <span class="field-label">Help needed / offered</span>
+                <span class="field-value">${escapeHtml(s.helpNeededOffered || '—')}</span>
+              </div>
+            </div>
+            ${paths.length ? `
+            <div class="files-list">
+              <span class="field-label">Additional materials</span>
+              <div>${fileLinks}</div>
+            </div>
+            ` : ''}
+          </article>
+        `;
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      async function load() {
+        loadingEl.style.display = 'block';
+        emptyEl.style.display = 'none';
+        submissionsEl.style.display = 'none';
+        errorEl.style.display = 'none';
+
+        try {
+          const res = await fetch(apiBase + '/api/submissions?key=' + encodeURIComponent(key));
+          if (!res.ok) {
+            throw new Error(res.status === 401 ? 'Invalid admin key' : 'Failed to load submissions');
+          }
+          const data = await res.json();
+          loadingEl.style.display = 'none';
+
+          if (data.length === 0) {
+            emptyEl.style.display = 'block';
+          } else {
+            submissionsEl.style.display = 'flex';
+            submissionsEl.innerHTML = data.map(renderSubmission).join('');
+          }
+
+          statTotalEl.textContent = data.length;
+          statsEl.style.display = 'grid';
+        } catch (e) {
+          loadingEl.style.display = 'none';
+          errorEl.textContent = e.message || 'An error occurred.';
+          errorEl.style.display = 'block';
+        }
+      }
+
+      document.getElementById('refresh').addEventListener('click', load);
+      load();
+    })();
+  </script>
+</body>
+</html>
