@@ -3,3 +3,5 @@ data/
 uploads/
 .env
 *.log
+admin_pass.txt
+api_key.txt

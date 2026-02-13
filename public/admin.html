@@ -556,6 +556,27 @@
         }
       }
 
+      submissionsEl.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.delete-btn');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Delete this submission?')) return;
+        btn.disabled = true;
+        try {
+          const res = await fetch(apiBase + '/api/submissions/' + encodeURIComponent(id) + '?key=' + encodeURIComponent(key), { method: 'DELETE' });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to delete');
+          }
+          load();
+        } catch (err) {
+          errorEl.textContent = err.message || 'Failed to delete';
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+        }
+      });
+
       document.getElementById('refresh').addEventListener('click', load);
       load();
     })();
