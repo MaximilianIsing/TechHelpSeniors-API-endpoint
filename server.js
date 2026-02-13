@@ -8,13 +8,20 @@ const { stringify } = require('csv-stringify/sync');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Load secrets from env or fallback to files
-const API_KEY = (process.env.API_KEY || (() => {
-  try { return fs.readFileSync(path.join(__dirname, 'api_key.txt'), 'utf8'); } catch { return ''; }
-})()).replace(/\s/g, '');
-const ADMIN_KEY = (process.env.ADMIN_KEY || (() => {
-  try { return fs.readFileSync(path.join(__dirname, 'admin_pass.txt'), 'utf8'); } catch { return ''; }
-})()).replace(/\s/g, '');
+// Load secrets: on Render use env vars only; locally use env then file fallback
+const IS_RENDER = process.env.RENDER === 'true';
+function loadSecret(envKey, altEnvKey, filePath) {
+  const fromEnv = process.env[envKey] || (altEnvKey ? process.env[altEnvKey] : '') || '';
+  if (IS_RENDER) return (fromEnv || '').replace(/\s/g, '');
+  if (fromEnv) return fromEnv.replace(/\s/g, '');
+  try {
+    return (fs.readFileSync(path.join(__dirname, filePath), 'utf8') || '').replace(/\s/g, '');
+  } catch {
+    return '';
+  }
+}
+const API_KEY = loadSecret('API_KEY', null, 'api_key.txt');
+const ADMIN_KEY = loadSecret('ADMIN_KEY', 'ADMIN_PASS', 'admin_pass.txt');
 
 // Directories — always use /storage (set DATA_PATH for Render disk, /storage for local)
 const STORAGE_ROOT = process.env.DATA_PATH || '/storage';
