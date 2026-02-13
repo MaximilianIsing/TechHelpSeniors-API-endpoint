@@ -145,6 +145,65 @@ app.get('/api/submissions', (req, res) => {
   res.json(submissions.reverse());
 });
 
+// API: delete submission (admin only)
+app.delete('/api/submissions/:id', (req, res) => {
+  const key = (req.query.key || '').replace(/\s/g, '');
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const id = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid submission id' });
+  }
+
+  const raw = fs.readFileSync(CSV_PATH, 'utf8');
+  const rows = parse(raw, { skip_empty_lines: true, relax_column_count: true });
+  const [header, ...data] = rows;
+  const idx = data.findIndex(row => (row[0] || '').trim() === id);
+  if (idx === -1) {
+    return res.status(404).json({ error: 'Submission not found' });
+  }
+
+  const deleted = data[idx];
+  const pathsCol = (header || CSV_HEADERS).indexOf('additionalMaterialsPaths');
+  const pathsRaw = pathsCol >= 0 ? (deleted[pathsCol] || '') : '';
+  const paths = pathsRaw.split('|').filter(Boolean);
+
+  for (const p of paths) {
+    const fullPath = path.resolve(path.join(STORAGE_ROOT, p));
+    if (fullPath.startsWith(path.resolve(UPLOADS_BASE))) {
+      try {
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+          fs.unlinkSync(fullPath);
+        }
+      } catch (_) {}
+    }
+  }
+
+  const dirsToRemove = new Set();
+  for (const p of paths) {
+    let d = path.dirname(p);
+    while (d && d !== '.' && d.startsWith('uploads')) {
+      dirsToRemove.add(path.join(STORAGE_ROOT, d));
+      d = path.dirname(d);
+    }
+  }
+  for (const dir of [...dirsToRemove].sort((a, b) => b.length - a.length)) {
+    try {
+      if (fs.existsSync(dir) && fs.readdirSync(dir).length === 0) {
+        fs.rmdirSync(dir);
+      }
+    } catch (_) {}
+  }
+
+  const remaining = data.filter((_, i) => i !== idx);
+  const newCsv = stringify([header || CSV_HEADERS, ...remaining]);
+  fs.writeFileSync(CSV_PATH, newCsv);
+
+  res.json({ success: true, id });
+});
+
 // Serve uploaded files (admin only, for viewing)
 app.get(/^\/api\/files\/(.+)$/, (req, res) => {
   const key = (req.query.key || '').replace(/\s/g, '');

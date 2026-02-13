@@ -307,6 +307,72 @@
     .refresh-btn:hover {
       background: var(--accent-hover);
     }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 180px;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .sort-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .delete-btn:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .submission-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -334,6 +400,17 @@
       <div class="section-header">
         <h2 class="section-title">Submissions</h2>
         <button class="refresh-btn" id="refresh">Refresh</button>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" class="search-input" id="search" placeholder="Search by name..." aria-label="Search submissions by name">
+        <select class="sort-select" id="sort" aria-label="Sort submissions">
+          <option value="date-desc">Date (newest first)</option>
+          <option value="date-asc">Date (oldest first)</option>
+          <option value="name-asc">Name (A–Z)</option>
+          <option value="name-desc">Name (Z–A)</option>
+          <option value="purpose-asc">Form purpose (A–Z)</option>
+        </select>
       </div>
 
       <div id="content">
@@ -365,6 +442,29 @@
       const errorEl = document.getElementById('error');
       const statsEl = document.getElementById('stats');
       const statTotalEl = document.getElementById('stat-total');
+      const searchEl = document.getElementById('search');
+      const sortEl = document.getElementById('sort');
+
+      let allData = [];
+
+      function filterAndSort(data, search, sortBy) {
+        let list = [...data];
+        const q = (search || '').trim().toLowerCase();
+        if (q) {
+          list = list.filter(s => {
+            const first = (s.firstName || '').toLowerCase();
+            const last = (s.lastName || '').toLowerCase();
+            const full = (first + ' ' + last).trim();
+            return first.includes(q) || last.includes(q) || full.includes(q);
+          });
+        }
+        if (sortBy === 'date-desc') list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        else if (sortBy === 'date-asc') list.sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+        else if (sortBy === 'name-asc') list.sort((a, b) => ((a.lastName || '') + (a.firstName || '')).toLowerCase().localeCompare((b.lastName || '') + (b.firstName || '').toLowerCase()));
+        else if (sortBy === 'name-desc') list.sort((a, b) => ((b.lastName || '') + (b.firstName || '')).toLowerCase().localeCompare((a.lastName || '') + (a.firstName || '').toLowerCase()));
+        else if (sortBy === 'purpose-asc') list.sort((a, b) => (a.formPurpose || '').toLowerCase().localeCompare((b.formPurpose || '').toLowerCase()));
+        return list;
+      }
 
       function renderSubmission(s) {
         const paths = Array.isArray(s.additionalMaterialsPaths) ? s.additionalMaterialsPaths : (s.additionalMaterialsPaths || '').split('|').filter(Boolean);
@@ -412,6 +512,9 @@
               <div class="file-links">${fileLinks}</div>
             </div>
             ` : ''}
+            <div class="submission-actions">
+              <button class="delete-btn" data-id="${escapeHtml(s.id || '')}" type="button">Delete</button>
+            </div>
           </article>
         `;
       }
