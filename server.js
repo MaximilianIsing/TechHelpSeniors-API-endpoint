@@ -16,8 +16,8 @@ const ADMIN_KEY = (process.env.ADMIN_KEY || (() => {
   try { return fs.readFileSync(path.join(__dirname, 'admin_pass.txt'), 'utf8'); } catch { return ''; }
 })()).replace(/\s/g, '');
 
-// Directories — use DATA_PATH (e.g. /data on Render disk) when set
-const STORAGE_ROOT = process.env.DATA_PATH || __dirname;
+// Directories — always use /storage (set DATA_PATH for Render disk, /storage for local)
+const STORAGE_ROOT = process.env.DATA_PATH || '/storage';
 const DATA_DIR = path.join(STORAGE_ROOT, 'data');
 const UPLOADS_BASE = path.join(STORAGE_ROOT, 'uploads');
 const CSV_PATH = path.join(DATA_DIR, 'submissions.csv');
