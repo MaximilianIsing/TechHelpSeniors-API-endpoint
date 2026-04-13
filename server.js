@@ -23,23 +23,70 @@ function loadSecret(envKey, altEnvKey, filePath) {
 const API_KEY = loadSecret('API_KEY', null, 'api_key.txt');
 const ADMIN_KEY = loadSecret('ADMIN_KEY', 'ADMIN_PASS', 'admin_pass.txt');
 
-// Directories — always use /storage (set DATA_PATH for Render disk, /storage for local)
-const STORAGE_ROOT = process.env.DATA_PATH || '/storage';
+// Directories — Render sets DATA_PATH to disk mount; locally use ./storage under the app
+const STORAGE_ROOT = process.env.DATA_PATH || path.join(__dirname, 'storage');
 const DATA_DIR = path.join(STORAGE_ROOT, 'data');
 const UPLOADS_BASE = path.join(STORAGE_ROOT, 'uploads');
 const CSV_PATH = path.join(DATA_DIR, 'submissions.csv');
+const NOTES_PATH = path.join(DATA_DIR, 'notes.json');
 
 [DATA_DIR, UPLOADS_BASE].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
-// CSV headers
-const CSV_HEADERS = ['id', 'timestamp', 'formPurpose', 'firstName', 'lastName', 'email', 'phone', 'helpNeededOffered', 'additionalMaterialsPaths'];
+// CSV headers — status workflow: new → triaged → in_progress → resolved
+const CSV_HEADERS = ['id', 'timestamp', 'formPurpose', 'firstName', 'lastName', 'email', 'phone', 'helpNeededOffered', 'status', 'additionalMaterialsPaths'];
+const SUBMISSION_STATUSES = ['new', 'triaged', 'in_progress', 'resolved'];
+
+function normalizeStatus(v) {
+  const s = String(v || '').trim().toLowerCase().replace(/\s+/g, '_');
+  if (SUBMISSION_STATUSES.includes(s)) return s;
+  return 'new';
+}
+
+function statusFromId(id) {
+  let h = 0;
+  const str = String(id);
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h) + str.charCodeAt(i);
+  return SUBMISSION_STATUSES[Math.abs(h) % SUBMISSION_STATUSES.length];
+}
 
 function ensureCsvExists() {
   if (!fs.existsSync(CSV_PATH)) {
     fs.writeFileSync(CSV_PATH, stringify([CSV_HEADERS]));
   }
+}
+
+function migrateSubmissionsCsvIfNeeded() {
+  if (!fs.existsSync(CSV_PATH)) return;
+  const raw = fs.readFileSync(CSV_PATH, 'utf8');
+  const rows = parse(raw, { skip_empty_lines: true, relax_column_count: true });
+  if (rows.length === 0) return;
+  const header = rows[0];
+  if (header.includes('status')) return;
+  const newRows = [CSV_HEADERS];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const id = (row[0] || '').trim();
+    const paths = row[8] != null ? row[8] : '';
+    const st = statusFromId(id);
+    newRows.push([...row.slice(0, 8), st, paths]);
+  }
+  fs.writeFileSync(CSV_PATH, stringify(newRows));
+}
+
+function readNotes() {
+  try {
+    const raw = fs.readFileSync(NOTES_PATH, 'utf8');
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeNotes(notes) {
+  fs.writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2));
 }
 
 function generateId() {
@@ -74,6 +121,7 @@ const upload = multer({
 });
 
 ensureCsvExists();
+migrateSubmissionsCsvIfNeeded();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -105,7 +153,7 @@ app.post('/api/submit', upload.array('additionalMaterials', 10), (req, res) => {
   const files = req.files || [];
   const relPaths = files.map(f => path.relative(STORAGE_ROOT, f.path).replace(/\\/g, '/'));
 
-  const row = [id, timestamp, formPurpose, firstName, lastName, email, phone, helpNeededOffered, relPaths.join('|')];
+  const row = [id, timestamp, formPurpose, firstName, lastName, email, phone, helpNeededOffered, 'new', relPaths.join('|')];
   const csvLine = stringify([row], { header: false });
   fs.appendFileSync(CSV_PATH, csvLine);
 
@@ -146,10 +194,51 @@ app.get('/api/submissions', (req, res) => {
     if (obj.additionalMaterialsPaths) {
       obj.additionalMaterialsPaths = obj.additionalMaterialsPaths.split('|').filter(Boolean);
     }
+    obj.status = normalizeStatus(obj.status);
     return obj;
   });
 
   res.json(submissions.reverse());
+});
+
+// API: update submission status (admin only)
+app.patch('/api/submissions/:id', (req, res) => {
+  const key = (req.query.key || '').replace(/\s/g, '');
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const id = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid submission id' });
+  }
+
+  const nextStatus = normalizeStatus(req.body?.status);
+  if (!SUBMISSION_STATUSES.includes(nextStatus)) {
+    return res.status(400).json({ error: 'Invalid status', allowed: SUBMISSION_STATUSES });
+  }
+
+  const raw = fs.readFileSync(CSV_PATH, 'utf8');
+  const rows = parse(raw, { skip_empty_lines: true, relax_column_count: true });
+  const [header, ...data] = rows;
+  const h = header || CSV_HEADERS;
+  const statusIdx = h.indexOf('status');
+  if (statusIdx < 0) {
+    return res.status(500).json({ error: 'CSV missing status column' });
+  }
+
+  const idx = data.findIndex(row => (row[0] || '').trim() === id);
+  if (idx === -1) {
+    return res.status(404).json({ error: 'Submission not found' });
+  }
+
+  const row = [...data[idx]];
+  while (row.length < h.length) row.push('');
+  row[statusIdx] = nextStatus;
+  data[idx] = row;
+
+  fs.writeFileSync(CSV_PATH, stringify([h, ...data]));
+  res.json({ success: true, id, status: nextStatus });
 });
 
 // API: delete submission (admin only)
@@ -229,6 +318,94 @@ app.get(/^\/api\/files\/(.+)$/, (req, res) => {
     return res.status(404).send('Not found');
   }
   res.sendFile(fullPath);
+});
+
+// Notes (admin only) — JSON file in data dir
+app.get('/api/notes', (req, res) => {
+  const key = (req.query.key || '').replace(/\s/g, '');
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const notes = readNotes().sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  res.json(notes);
+});
+
+app.post('/api/notes', (req, res) => {
+  const key = (req.query.key || '').replace(/\s/g, '');
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const title = String(req.body?.title || '').trim().slice(0, 300);
+  const body = String(req.body?.body || '').slice(0, 50000);
+  const linkedRaw = req.body?.linkedSubmissionId;
+  const linkedSubmissionId =
+    linkedRaw != null && String(linkedRaw).trim() !== ''
+      ? String(linkedRaw).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80)
+      : '';
+  if (!title && !body) {
+    return res.status(400).json({ error: 'Title or body is required' });
+  }
+  const now = new Date().toISOString();
+  const note = {
+    id: generateId(),
+    title: title || '(Untitled)',
+    body,
+    createdAt: now,
+    updatedAt: now,
+    linkedSubmissionId
+  };
+  const notes = readNotes();
+  notes.push(note);
+  writeNotes(notes);
+  res.status(201).json(note);
+});
+
+app.put('/api/notes/:id', (req, res) => {
+  const key = (req.query.key || '').replace(/\s/g, '');
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const id = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid note id' });
+  }
+  const notes = readNotes();
+  const idx = notes.findIndex(n => n.id === id);
+  if (idx === -1) {
+    return res.status(404).json({ error: 'Note not found' });
+  }
+  const titleIn = req.body?.title;
+  const bodyIn = req.body?.body;
+  const linkedIn = req.body?.linkedSubmissionId;
+  if (titleIn !== undefined) notes[idx].title = String(titleIn).trim().slice(0, 300) || '(Untitled)';
+  if (bodyIn !== undefined) notes[idx].body = String(bodyIn).slice(0, 50000);
+  if (linkedIn !== undefined) {
+    notes[idx].linkedSubmissionId =
+      linkedIn != null && String(linkedIn).trim() !== ''
+        ? String(linkedIn).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80)
+        : '';
+  }
+  notes[idx].updatedAt = new Date().toISOString();
+  writeNotes(notes);
+  res.json(notes[idx]);
+});
+
+app.delete('/api/notes/:id', (req, res) => {
+  const key = (req.query.key || '').replace(/\s/g, '');
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const id = (req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid note id' });
+  }
+  const notes = readNotes();
+  const next = notes.filter(n => n.id !== id);
+  if (next.length === notes.length) {
+    return res.status(404).json({ error: 'Note not found' });
+  }
+  writeNotes(next);
+  res.json({ success: true, id });
 });
 
 app.listen(PORT, () => {
